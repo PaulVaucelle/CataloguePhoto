@@ -1,0 +1,38 @@
+export const Colors = {
+  light: {
+    background: "#ffffff",
+    backgroundCard: "#f5f5f5",
+    text: "#111111",
+    textSecondary: "#888888",
+    border: "#dddddd",
+    placeholder: "#aaaaaa",
+    heroBackground: "#1a1a2e",
+    badgeDoneBg: "#EAF3DE",
+    badgeDoneText: "#3B6D11",
+    badgeTodoBg: "#eeeeee",
+    badgeTodoText: "#888888",
+    btnPrimary: "#111111",
+    btnPrimaryText: "#ffffff",
+    btnDanger: "#cc3333",
+    inputBg: "#f5f5f5",
+  },
+  dark: {
+    background: "#111111",
+    backgroundCard: "#1e1e1e",
+    text: "#f0f0f0",
+    textSecondary: "#888888",
+    border: "#333333",
+    placeholder: "#555555",
+    heroBackground: "#0a0a1a",
+    badgeDoneBg: "#1a3a0a",
+    badgeDoneText: "#7ec850",
+    badgeTodoBg: "#2a2a2a",
+    badgeTodoText: "#888888",
+    btnPrimary: "#f0f0f0",
+    btnPrimaryText: "#111111",
+    btnDanger: "#cc3333",
+    inputBg: "#1e1e1e",
+  },
+};
+
+export type ColorScheme = typeof Colors.light;
