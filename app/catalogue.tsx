@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import StarField from "./components/StarField";
+import BackgroundField from "./components/BackgroundField";
 import { Domain, loadData } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
@@ -54,7 +54,7 @@ export default function CatalogueScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
-      {domainId === "astro" && <StarField />}
+      <BackgroundField domainId={domainId} />
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={[styles.backText, { color: c.textSecondary }]}>
           ← Accueil
