@@ -40,15 +40,6 @@ export default function HomeScreen() {
         {totalDone} objets photographiés
       </Text>
 
-      <TouchableOpacity
-        onPress={() => router.push("/stats")}
-        style={styles.statsBtn}
-      >
-        <Text style={[styles.statsBtnText, { color: "#1D9E75" }]}>
-          Voir les statistiques →
-        </Text>
-      </TouchableOpacity>
-
       <View style={styles.grid}>
         {domains.map((domain) => {
           const done = domain.objects.filter((o) => o.done).length;
@@ -84,6 +75,24 @@ export default function HomeScreen() {
           );
         })}
       </View>
+
+      <TouchableOpacity
+        onPress={() => router.push("/stats")}
+        style={styles.statsBtn}
+      >
+        <Text style={[styles.statsBtnText, { color: "#1D9E75" }]}>
+          Voir les statistiques →
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push("/about")}
+        style={styles.statsBtn}
+      >
+        <Text style={[styles.statsBtnText, { color: c.textSecondary }]}>
+          À propos →
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
