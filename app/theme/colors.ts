@@ -33,6 +33,30 @@ export const Colors = {
     btnDanger: "#cc3333",
     inputBg: "#1e1e1e",
   },
+  space: {
+    background: "#080820",
+    backgroundCard: "#0f0f2e",
+    text: "#e8e8ff",
+    textSecondary: "#7070aa",
+    border: "#1e1e4e",
+    placeholder: "#404070",
+    heroBackground: "#030310",
+    badgeDoneBg: "#0a2a1a",
+    badgeDoneText: "#5DCAA5",
+    badgeTodoBg: "#0f0f2e",
+    badgeTodoText: "#7070aa",
+    btnPrimary: "#5DCAA5",
+    btnPrimaryText: "#080820",
+    btnDanger: "#cc3333",
+    inputBg: "#0f0f2e",
+    accent: "#5DCAA5",
+    accentSoft: "#1D9E7520",
+    starColor: "#ffffff",
+  },
 };
 
-export type ColorScheme = typeof Colors.light;
+export type ColorScheme = typeof Colors.light & {
+  accent?: string;
+  accentSoft?: string;
+  starColor?: string;
+};

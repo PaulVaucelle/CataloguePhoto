@@ -11,12 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import StarField from "./components/StarField";
 import { loadData, saveData, toggleObject } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
 export default function DetailScreen() {
   const router = useRouter();
-  const c = useTheme();
+
   const {
     id,
     domainId,
@@ -40,7 +41,7 @@ export default function DetailScreen() {
     distance: string;
     notes: string;
   }>();
-
+  const c = useTheme(domainId);
   const [isDone, setIsDone] = useState(done === "1");
   const [photoUri, setPhotoUri] = useState<string | undefined>(
     initialPhoto || undefined,
@@ -136,6 +137,7 @@ export default function DetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
+      {domainId === "astro" && <StarField />}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={[styles.backText, { color: c.textSecondary }]}>
           ← Catalogue

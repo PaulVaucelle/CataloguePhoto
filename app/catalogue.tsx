@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+import StarField from "./components/StarField";
 import { Domain, loadData } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
@@ -16,8 +18,9 @@ type SortBy = "nom" | "type";
 
 export default function CatalogueScreen() {
   const router = useRouter();
-  const c = useTheme();
+
   const { domainId } = useLocalSearchParams<{ domainId: string }>();
+  const c = useTheme(domainId);
   const [domain, setDomain] = useState<Domain | null>(null);
   const [filter, setFilter] = useState<Filter>("tous");
   const [search, setSearch] = useState("");
@@ -51,6 +54,7 @@ export default function CatalogueScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
+      {domainId === "astro" && <StarField />}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={[styles.backText, { color: c.textSecondary }]}>
           ← Accueil
