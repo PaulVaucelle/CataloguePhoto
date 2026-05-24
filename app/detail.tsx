@@ -15,6 +15,9 @@ import BackgroundField from "./components/BackgroundField";
 import { loadData, saveData, toggleObject } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
+import BadgeUnlocked from "./components/BadgeUnlocked";
+import { Badge, computeBadges } from "./storage/badge";
+
 export default function DetailScreen() {
   const router = useRouter();
 
@@ -48,6 +51,7 @@ export default function DetailScreen() {
   );
   const [notes, setNotes] = useState<string>(initialNotes ?? "");
   const [saving, setSaving] = useState(false);
+  const [newBadge, setNewBadge] = useState<Badge | null>(null);
 
   async function handleCamera() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -86,14 +90,24 @@ export default function DetailScreen() {
   async function savePhoto(uri: string) {
     setSaving(true);
     const today = new Date().toLocaleDateString("fr-FR");
+
+    const dataBefore = await loadData();
+    const badgesBefore = computeBadges(dataBefore)
+      .filter((b) => b.unlocked)
+      .map((b) => b.id);
+
     await toggleObject(domainId, id, { photoUri: uri, date: today });
     setPhotoUri(uri);
     setIsDone(true);
-    setSaving(false);
-    Alert.alert(
-      "Photo sauvegardée",
-      `${name} est maintenant marqué comme photographié !`,
+
+    const dataAfter = await loadData();
+    const badgesAfter = computeBadges(dataAfter);
+    const newlyUnlocked = badgesAfter.find(
+      (b) => b.unlocked && !badgesBefore.includes(b.id),
     );
+    if (newlyUnlocked) setNewBadge(newlyUnlocked);
+
+    setSaving(false);
   }
 
   async function handleRemove() {
@@ -252,6 +266,7 @@ export default function DetailScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+      <BadgeUnlocked badge={newBadge} onHide={() => setNewBadge(null)} />
     </View>
   );
 }

@@ -86,6 +86,15 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        onPress={() => router.push("/badges")}
+        style={styles.statsBtn}
+      >
+        <Text style={[styles.statsBtnText, { color: "#F0A500" }]}>
+          Mes badges →
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         onPress={() => router.push("/about")}
         style={styles.statsBtn}
       >
