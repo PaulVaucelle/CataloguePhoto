@@ -15,6 +15,8 @@ import BackgroundField from "./components/BackgroundField";
 import { loadData, saveData, toggleObject } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
+import * as Location from "expo-location";
+import MapView, { Marker } from "react-native-maps";
 import BadgeUnlocked from "./components/BadgeUnlocked";
 import { Badge, computeBadges } from "./storage/badge";
 
@@ -32,6 +34,7 @@ export default function DetailScreen() {
     magnitude,
     distance,
     notes: initialNotes,
+    location: initialLocation,
   } = useLocalSearchParams<{
     id: string;
     domainId: string;
@@ -43,6 +46,7 @@ export default function DetailScreen() {
     magnitude: string;
     distance: string;
     notes: string;
+    location: string;
   }>();
   const c = useTheme(domainId);
   const [isDone, setIsDone] = useState(done === "1");
@@ -52,6 +56,9 @@ export default function DetailScreen() {
   const [notes, setNotes] = useState<string>(initialNotes ?? "");
   const [saving, setSaving] = useState(false);
   const [newBadge, setNewBadge] = useState<Badge | null>(null);
+  const [location, setLocation] = useState<
+    { latitude: number; longitude: number } | undefined
+  >(initialLocation ? JSON.parse(initialLocation) : undefined);
 
   async function handleCamera() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -96,7 +103,21 @@ export default function DetailScreen() {
       .filter((b) => b.unlocked)
       .map((b) => b.id);
 
-    await toggleObject(domainId, id, { photoUri: uri, date: today });
+    let location: { latitude: number; longitude: number } | undefined;
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.granted) {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Low,
+        });
+        location = {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        };
+      }
+    } catch {}
+
+    await toggleObject(domainId, id, { photoUri: uri, date: today, location });
     setPhotoUri(uri);
     setIsDone(true);
 
@@ -198,30 +219,118 @@ export default function DetailScreen() {
               {isDone ? "Photographié" : "Pas encore photographié"}
             </Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.lbl, { color: c.textSecondary }]}>
-              Constellation
-            </Text>
-            <Text style={[styles.val, { color: c.text }]}>
-              {constellation || "—"}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.lbl, { color: c.textSecondary }]}>
-              Magnitude
-            </Text>
-            <Text style={[styles.val, { color: c.text }]}>
-              {magnitude || "—"}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.lbl, { color: c.textSecondary }]}>
-              Distance
-            </Text>
-            <Text style={[styles.val, { color: c.text }]}>
-              {distance || "—"}
-            </Text>
-          </View>
+          {domainId === "astro" && (
+            <>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Constellation
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {constellation || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Magnitude
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {magnitude || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Distance
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {distance || "—"}
+                </Text>
+              </View>
+            </>
+          )}
+          {domainId === "fleurs" && (
+            <>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Famille
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {constellation || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Floraison
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {magnitude || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Habitat
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {distance || "—"}
+                </Text>
+              </View>
+            </>
+          )}
+          {domainId === "arbres" && (
+            <>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Famille
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {constellation || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Feuillage
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {magnitude || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Habitat
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {distance || "—"}
+                </Text>
+              </View>
+            </>
+          )}
+          {domainId === "oiseaux" && (
+            <>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Ordre
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {constellation || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Envergure
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {magnitude || "—"}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.lbl, { color: c.textSecondary }]}>
+                  Habitat
+                </Text>
+                <Text style={[styles.val, { color: c.text }]}>
+                  {distance || "—"}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={[styles.infoBlock, { backgroundColor: c.backgroundCard }]}>
@@ -239,6 +348,29 @@ export default function DetailScreen() {
             numberOfLines={4}
           />
         </View>
+
+        {location && (
+          <View
+            style={[styles.infoBlock, { backgroundColor: c.backgroundCard }]}
+          >
+            <Text style={[styles.notesLabel, { color: c.textSecondary }]}>
+              Lieu de prise de vue
+            </Text>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+            >
+              <Marker coordinate={location} />
+            </MapView>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: c.btnPrimary }]}
@@ -369,5 +501,11 @@ const styles = StyleSheet.create({
   },
   removeBtnText: {
     fontSize: 14,
+  },
+  map: {
+    height: 150,
+    borderRadius: 10,
+    marginTop: 6,
+    overflow: "hidden",
   },
 });

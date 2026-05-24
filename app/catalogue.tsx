@@ -165,6 +165,7 @@ export default function CatalogueScreen() {
                     magnitude: obj.magnitude ?? "",
                     distance: obj.distance ?? "",
                     notes: obj.notes ?? "",
+                    location: obj.location ? JSON.stringify(obj.location) : "",
                   },
                 })
               }

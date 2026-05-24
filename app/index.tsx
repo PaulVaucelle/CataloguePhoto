@@ -95,6 +95,15 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        onPress={() => router.push("/map")}
+        style={styles.statsBtn}
+      >
+        <Text style={[styles.statsBtnText, { color: "#378ADD" }]}>
+          Mes spots →
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         onPress={() => router.push("/about")}
         style={styles.statsBtn}
       >
