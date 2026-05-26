@@ -50,7 +50,7 @@ export default function HomeScreen() {
         <Text style={[styles.greeting, { color: c.textSecondary }]}>
           Bienvenue
         </Text>
-        <Text style={[styles.appName, { color: c.text }]}>CataloguePhoto</Text>
+        <Text style={[styles.appName, { color: c.text }]}>NatureScope</Text>
       </View>
 
       {/* Carte progression globale */}

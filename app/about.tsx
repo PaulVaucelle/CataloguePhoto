@@ -33,7 +33,7 @@ export default function AboutScreen() {
         <View style={styles.hero}>
           <Text style={styles.heroIcon}>🔭</Text>
           <Text style={[styles.appName, { color: c.text }]}>
-            CataloguePhoto
+            NatureScope
           </Text>
           <Text style={[styles.version, { color: c.textSecondary }]}>
             Version 1.0.0
@@ -45,7 +45,7 @@ export default function AboutScreen() {
             À propos
           </Text>
           <Text style={[styles.cardText, { color: c.text }]}>
-            CataloguePhoto te permet de cataloguer tes photos d'objets célestes,
+            NatureScope te permet de cataloguer tes photos d'objets célestes,
             de fleurs, d'arbres et d'oiseaux. Suis ta progression et constitue
             ta collection personnelle au fil de tes sorties.
           </Text>

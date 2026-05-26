@@ -87,6 +87,17 @@ export default function CatalogueScreen() {
         </View>
       </View>
 
+      {domain.objects.filter(o => o.done && o.photoUri).length >= 10 && (
+        <TouchableOpacity
+          style={[styles.albumBtn, { backgroundColor: domain.color + '22', borderColor: domain.color }]}
+          onPress={() => router.push({ pathname: '/album', params: { domainId: domain.id } })}
+        >
+          <Text style={[styles.albumBtnText, { color: domain.color }]}>
+            🎞️ Voir l'album ({domain.objects.filter(o => o.done && o.photoUri).length} photos)
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* Recherche */}
       <View style={[styles.searchRow, { backgroundColor: c.inputBg }]}>
         <Text style={{ fontSize: 14, marginRight: 6 }}>🔍</Text>
@@ -476,4 +487,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  albumBtn: {
+  marginHorizontal: 20,
+  marginBottom: 10,
+  borderRadius: 12,
+  padding: 12,
+  alignItems: 'center',
+  borderWidth: 1,
+},
+albumBtnText: {
+  fontSize: 14,
+  fontWeight: '600',
+},
 });

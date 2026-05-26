@@ -84,7 +84,31 @@ export default function DetailScreen() {
               { label: "Feuillage", value: magnitude },
               { label: "Habitat", value: distance },
             ]
-          : [];
+          : domainId === "oiseaux"
+            ? [
+                { label: "Ordre", value: constellation },
+                { label: "Envergure", value: magnitude },
+                { label: "Habitat", value: distance },
+              ]
+            : domainId === "mineraux"
+              ? [
+                  { label: "Famille", value: constellation },
+                  { label: "Dureté", value: magnitude },
+                  { label: "Origine", value: distance },
+                ]
+              : domainId === "champignons"
+                ? [
+                    { label: "Famille", value: constellation },
+                    { label: "Saison", value: magnitude },
+                    { label: "Habitat", value: distance },
+                  ]
+                : domainId === "pays"
+                  ? [
+                      { label: "Capitale", value: constellation },
+                      { label: "Population", value: magnitude },
+                      { label: "Superficie", value: distance },
+                    ]
+                  : [];
 
   async function handleCamera() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
