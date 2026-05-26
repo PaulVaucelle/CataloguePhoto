@@ -8,31 +8,52 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { addObject } from "./storage/catalogue";
+import { addObject, updateObject } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
 export default function CreateObjectScreen() {
   const router = useRouter();
   const c = useTheme();
-  const { domainId, domainLabel, domainIcon, domainColor } =
-    useLocalSearchParams<{
-      domainId: string;
-      domainLabel: string;
-      domainIcon: string;
-      domainColor: string;
-    }>();
+  const {
+    domainId,
+    domainLabel,
+    domainIcon,
+    domainColor,
+    objectId,
+    editName,
+    editType,
+  } = useLocalSearchParams<{
+    domainId: string;
+    domainLabel: string;
+    domainIcon: string;
+    domainColor: string;
+    objectId?: string;
+    editName?: string;
+    editType?: string;
+  }>();
 
-  const [name, setName] = useState("");
-  const [type, setType] = useState("");
+  const isEditing = !!objectId;
+
+  const [name, setName] = useState(editName ?? "");
+  const [type, setType] = useState(editType ?? "");
   const [saving, setSaving] = useState(false);
 
-  async function handleAdd() {
+  async function handleSave() {
     if (!name.trim()) {
       Alert.alert("Nom requis", "Donne un nom à cet objet.");
       return;
     }
     setSaving(true);
-    await addObject(domainId, name.trim(), type.trim() || "Personnalisé");
+    if (isEditing) {
+      await updateObject(
+        domainId,
+        objectId!,
+        name.trim(),
+        type.trim() || "Personnalisé",
+      );
+    } else {
+      await addObject(domainId, name.trim(), type.trim() || "Personnalisé");
+    }
     setSaving(false);
     router.back();
   }
@@ -48,7 +69,9 @@ export default function CreateObjectScreen() {
         <View style={styles.headerRow}>
           <Text style={styles.headerIcon}>{domainIcon}</Text>
           <View>
-            <Text style={[styles.title, { color: c.text }]}>Nouvel objet</Text>
+            <Text style={[styles.title, { color: c.text }]}>
+              {isEditing ? "Modifier l'objet" : "Nouvel objet"}
+            </Text>
             <Text style={[styles.subtitle, { color: c.textSecondary }]}>
               {domainLabel}
             </Text>
@@ -97,12 +120,16 @@ export default function CreateObjectScreen() {
             styles.addBtn,
             { backgroundColor: domainColor || c.btnPrimary },
           ]}
-          onPress={handleAdd}
+          onPress={handleSave}
           disabled={saving}
           activeOpacity={0.8}
         >
           <Text style={styles.addBtnText}>
-            {saving ? "Ajout..." : "Ajouter l'objet"}
+            {saving
+              ? "Sauvegarde..."
+              : isEditing
+                ? "Enregistrer"
+                : "Ajouter l'objet"}
           </Text>
         </TouchableOpacity>
       </View>

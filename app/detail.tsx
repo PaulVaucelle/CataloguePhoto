@@ -344,6 +344,30 @@ export default function DetailScreen() {
         {domainId.startsWith("custom_") && (
           <TouchableOpacity
             style={[styles.removeBtn, { borderColor: c.border }]}
+            onPress={() =>
+              router.push({
+                pathname: "/create-object",
+                params: {
+                  domainId,
+                  domainLabel: "",
+                  domainIcon: "",
+                  domainColor: "",
+                  objectId: id,
+                  editName: name,
+                  editType: type,
+                },
+              })
+            }
+          >
+            <Text style={[styles.removeBtnText, { color: c.text }]}>
+              Modifier l'objet
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {domainId.startsWith("custom_") && (
+          <TouchableOpacity
+            style={[styles.removeBtn, { borderColor: c.border }]}
             onPress={() => {
               Alert.alert(
                 "Supprimer l'objet",

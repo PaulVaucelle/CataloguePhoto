@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
     Alert,
@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { createDomain } from "./storage/catalogue";
+import { createDomain, updateDomain } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
 const PRESET_COLORS = [
@@ -30,12 +30,23 @@ const PRESET_COLORS = [
 export default function CreateDomainScreen() {
   const router = useRouter();
   const c = useTheme();
-  const [label, setLabel] = useState("");
-  const [icon, setIcon] = useState("");
-  const [color, setColor] = useState(PRESET_COLORS[0]);
+
+  // Params optionnels pour le mode edition
+  const { domainId, editLabel, editIcon, editColor } = useLocalSearchParams<{
+    domainId?: string;
+    editLabel?: string;
+    editIcon?: string;
+    editColor?: string;
+  }>();
+
+  const isEditing = !!domainId;
+
+  const [label, setLabel] = useState(editLabel ?? "");
+  const [icon, setIcon] = useState(editIcon ?? "");
+  const [color, setColor] = useState(editColor ?? PRESET_COLORS[0]);
   const [saving, setSaving] = useState(false);
 
-  async function handleCreate() {
+  async function handleSave() {
     if (!label.trim()) {
       Alert.alert("Nom requis", "Donne un nom à ton domaine.");
       return;
@@ -45,7 +56,11 @@ export default function CreateDomainScreen() {
       return;
     }
     setSaving(true);
-    await createDomain(label.trim(), icon.trim(), color);
+    if (isEditing) {
+      await updateDomain(domainId!, label.trim(), icon.trim(), color);
+    } else {
+      await createDomain(label.trim(), icon.trim(), color);
+    }
     setSaving(false);
     router.back();
   }
@@ -58,7 +73,9 @@ export default function CreateDomainScreen() {
             ← Annuler
           </Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: c.text }]}>Nouveau domaine</Text>
+        <Text style={[styles.title, { color: c.text }]}>
+          {isEditing ? "Modifier le domaine" : "Nouveau domaine"}
+        </Text>
       </View>
 
       <ScrollView
@@ -146,15 +163,19 @@ export default function CreateDomainScreen() {
           </View>
         </View>
 
-        {/* Bouton créer */}
+        {/* Bouton sauvegarder */}
         <TouchableOpacity
           style={[styles.createBtn, { backgroundColor: color }]}
-          onPress={handleCreate}
+          onPress={handleSave}
           disabled={saving}
           activeOpacity={0.8}
         >
           <Text style={styles.createBtnText}>
-            {saving ? "Création..." : "Créer le domaine"}
+            {saving
+              ? "Sauvegarde..."
+              : isEditing
+                ? "Enregistrer les modifications"
+                : "Créer le domaine"}
           </Text>
         </TouchableOpacity>
       </ScrollView>

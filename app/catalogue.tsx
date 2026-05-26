@@ -259,6 +259,26 @@ export default function CatalogueScreen() {
           >
             <Text style={styles.addObjText}>+ Ajouter un objet</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.addObjBtn, { backgroundColor: c.backgroundCard }]}
+            onPress={() =>
+              router.push({
+                pathname: "/create-domain",
+                params: {
+                  domainId: domain.id,
+                  editLabel: domain.label,
+                  editIcon: domain.icon,
+                  editColor: domain.color,
+                },
+              })
+            }
+          >
+            <Text style={[styles.addObjText, { color: c.text }]}>
+              Modifier le domaine
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.deleteBtn, { borderColor: c.border }]}
             onPress={() => {
