@@ -2356,3 +2356,52 @@ export async function toggleObject(
   await saveData(data);
   return data;
 }
+
+// Créer un nouveau domaine custom
+export async function createDomain(
+  label: string,
+  icon: string,
+  color: string,
+): Promise<Domain[]> {
+  const data = await loadData();
+  const id = "custom_" + Date.now();
+  data.push({ id, label, icon, color, objects: [] });
+  await saveData(data);
+  return data;
+}
+
+// Ajouter un objet dans un domaine
+export async function addObject(
+  domainId: string,
+  name: string,
+  type: string,
+): Promise<Domain[]> {
+  const data = await loadData();
+  const domain = data.find((d) => d.id === domainId);
+  if (!domain) return data;
+  const id = domainId + "_" + Date.now();
+  domain.objects.push({ id, name, type, done: false });
+  await saveData(data);
+  return data;
+}
+
+// Supprimer un domaine custom
+export async function deleteDomain(domainId: string): Promise<Domain[]> {
+  const data = await loadData();
+  const filtered = data.filter((d) => d.id !== domainId);
+  await saveData(filtered);
+  return filtered;
+}
+
+// Supprimer un objet
+export async function deleteObject(
+  domainId: string,
+  objectId: string,
+): Promise<Domain[]> {
+  const data = await loadData();
+  const domain = data.find((d) => d.id === domainId);
+  if (!domain) return data;
+  domain.objects = domain.objects.filter((o) => o.id !== objectId);
+  await saveData(data);
+  return data;
+}

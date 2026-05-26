@@ -1,15 +1,19 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Badge, computeBadges } from "./storage/badge";
 import { loadData } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
+
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = (width - 52) / 2;
 
 export default function BadgesScreen() {
   const router = useRouter();
@@ -27,18 +31,38 @@ export default function BadgesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={[styles.backText, { color: c.textSecondary }]}>
-          ← Accueil
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={[styles.backText, { color: c.textSecondary }]}>
+            ← Accueil
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: c.text }]}>Badges</Text>
+        <View style={styles.headerRow}>
+          <Text style={[styles.headerSub, { color: c.textSecondary }]}>
+            {unlocked.length} obtenu{unlocked.length > 1 ? "s" : ""} sur{" "}
+            {badges.length}
+          </Text>
+          <View
+            style={[styles.progressPill, { backgroundColor: c.backgroundCard }]}
+          >
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${badges.length > 0 ? Math.round((unlocked.length / badges.length) * 100) : 0}%`,
+                  backgroundColor: "#F0A500",
+                },
+              ]}
+            />
+          </View>
+        </View>
+      </View>
 
-      <Text style={[styles.title, { color: c.text }]}>Badges</Text>
-      <Text style={[styles.subtitle, { color: c.textSecondary }]}>
-        {unlocked.length} / {badges.length} obtenus
-      </Text>
-
-      <ScrollView contentContainerStyle={styles.list}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
         {unlocked.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { color: c.text }]}>
@@ -51,19 +75,21 @@ export default function BadgesScreen() {
                   style={[
                     styles.card,
                     styles.cardUnlocked,
-                    {
-                      backgroundColor: c.backgroundCard,
-                      borderColor: "#5DCAA5",
-                    },
+                    { backgroundColor: c.backgroundCard },
                   ]}
                 >
-                  <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                  <View
+                    style={[styles.iconWrap, { backgroundColor: "#F0A50018" }]}
+                  >
+                    <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                  </View>
                   <Text style={[styles.badgeLabel, { color: c.text }]}>
                     {badge.label}
                   </Text>
                   <Text style={[styles.badgeDesc, { color: c.textSecondary }]}>
                     {badge.description}
                   </Text>
+                  <View style={styles.unlockedDot} />
                 </View>
               ))}
             </View>
@@ -79,21 +105,27 @@ export default function BadgesScreen() {
               {locked.map((badge) => (
                 <View
                   key={badge.id}
-                  style={[
-                    styles.card,
-                    {
-                      backgroundColor: c.backgroundCard,
-                      borderColor: c.border,
-                    },
-                  ]}
+                  style={[styles.card, { backgroundColor: c.backgroundCard }]}
                 >
-                  <Text style={[styles.badgeIcon, styles.badgeIconLocked]}>
-                    🔒
-                  </Text>
+                  <View
+                    style={[
+                      styles.iconWrap,
+                      { backgroundColor: c.border + "44" },
+                    ]}
+                  >
+                    <Text style={[styles.badgeIcon, { opacity: 0.3 }]}>
+                      {badge.icon}
+                    </Text>
+                  </View>
                   <Text style={[styles.badgeLabel, { color: c.textSecondary }]}>
                     {badge.label}
                   </Text>
-                  <Text style={[styles.badgeDesc, { color: c.textSecondary }]}>
+                  <Text
+                    style={[
+                      styles.badgeDesc,
+                      { color: c.textSecondary, opacity: 0.6 },
+                    ]}
+                  >
                     {badge.description}
                   </Text>
                 </View>
@@ -109,70 +141,100 @@ export default function BadgesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
   },
-  backBtn: {
+  header: {
+    paddingTop: 60,
     paddingHorizontal: 20,
-    marginBottom: 4,
+    paddingBottom: 16,
   },
   backText: {
     fontSize: 14,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    paddingHorizontal: 20,
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 14,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  list: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
+  headerSub: {
+    fontSize: 13,
+  },
+  progressPill: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  body: {
+    paddingHorizontal: 20,
+    gap: 12,
+    paddingBottom: 40,
+  },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "600",
-    marginBottom: 4,
-    marginTop: 8,
+    letterSpacing: -0.3,
+    marginTop: 4,
+    marginBottom: -4,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   },
   card: {
-    width: "47%",
-    borderRadius: 14,
+    width: CARD_WIDTH,
+    borderRadius: 16,
     padding: 14,
     alignItems: "center",
-    borderWidth: 1.5,
-    gap: 6,
+    gap: 8,
+    position: "relative",
   },
   cardUnlocked: {
-    shadowColor: "#5DCAA5",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowColor: "#F0A500",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     elevation: 3,
   },
-  badgeIcon: {
-    fontSize: 32,
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
   },
-  badgeIconLocked: {
-    opacity: 0.4,
+  badgeIcon: {
+    fontSize: 28,
   },
   badgeLabel: {
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",
+    letterSpacing: -0.2,
   },
   badgeDesc: {
     fontSize: 11,
     textAlign: "center",
-    lineHeight: 16,
+    lineHeight: 15,
+  },
+  unlockedDot: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#F0A500",
   },
 });

@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -11,18 +12,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import BackgroundField from "./components/BackgroundField";
-import { loadData, saveData, toggleObject } from "./storage/catalogue";
-import { useTheme } from "./theme/useTheme";
-
-import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
+import BackgroundField from "./components/BackgroundField";
 import BadgeUnlocked from "./components/BadgeUnlocked";
 import { Badge, computeBadges } from "./storage/badge";
+import {
+  deleteObject,
+  loadData,
+  saveData,
+  toggleObject,
+} from "./storage/catalogue";
+import { useTheme } from "./theme/useTheme";
 
 export default function DetailScreen() {
   const router = useRouter();
-
   const {
     id,
     domainId,
@@ -48,6 +51,7 @@ export default function DetailScreen() {
     notes: string;
     location: string;
   }>();
+
   const c = useTheme(domainId);
   const [isDone, setIsDone] = useState(done === "1");
   const [photoUri, setPhotoUri] = useState<string | undefined>(
@@ -60,13 +64,32 @@ export default function DetailScreen() {
     { latitude: number; longitude: number } | undefined
   >(initialLocation ? JSON.parse(initialLocation) : undefined);
 
+  // Labels selon le domaine
+  const meta =
+    domainId === "astro"
+      ? [
+          { label: "Constellation", value: constellation },
+          { label: "Magnitude", value: magnitude },
+          { label: "Distance", value: distance },
+        ]
+      : domainId === "fleurs"
+        ? [
+            { label: "Famille", value: constellation },
+            { label: "Floraison", value: magnitude },
+            { label: "Habitat", value: distance },
+          ]
+        : domainId === "arbres"
+          ? [
+              { label: "Famille", value: constellation },
+              { label: "Feuillage", value: magnitude },
+              { label: "Habitat", value: distance },
+            ]
+          : [];
+
   async function handleCamera() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(
-        "Permission refusée",
-        "Autorise l'accès à l'appareil photo dans les réglages.",
-      );
+      Alert.alert("Permission refusée", "Autorise l'accès à l'appareil photo.");
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -80,10 +103,7 @@ export default function DetailScreen() {
   async function handleGallery() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(
-        "Permission refusée",
-        "Autorise l'accès à la galerie dans les réglages.",
-      );
+      Alert.alert("Permission refusée", "Autorise l'accès à la galerie.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -98,26 +118,28 @@ export default function DetailScreen() {
     setSaving(true);
     const today = new Date().toLocaleDateString("fr-FR");
 
+    let loc: { latitude: number; longitude: number } | undefined;
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.granted) {
+        const l = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Low,
+        });
+        loc = { latitude: l.coords.latitude, longitude: l.coords.longitude };
+        setLocation(loc);
+      }
+    } catch {}
+
     const dataBefore = await loadData();
     const badgesBefore = computeBadges(dataBefore)
       .filter((b) => b.unlocked)
       .map((b) => b.id);
 
-    let location: { latitude: number; longitude: number } | undefined;
-    try {
-      const perm = await Location.requestForegroundPermissionsAsync();
-      if (perm.granted) {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Low,
-        });
-        location = {
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        };
-      }
-    } catch {}
-
-    await toggleObject(domainId, id, { photoUri: uri, date: today, location });
+    await toggleObject(domainId, id, {
+      photoUri: uri,
+      date: today,
+      location: loc,
+    });
     setPhotoUri(uri);
     setIsDone(true);
 
@@ -145,6 +167,7 @@ export default function DetailScreen() {
             await toggleObject(domainId, id);
             setPhotoUri(undefined);
             setIsDone(false);
+            setLocation(undefined);
             setSaving(false);
           },
         },
@@ -173,168 +196,89 @@ export default function DetailScreen() {
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
       <BackgroundField domainId={domainId} />
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={[styles.backText, { color: c.textSecondary }]}>
-          ← Catalogue
-        </Text>
-      </TouchableOpacity>
+      <BadgeUnlocked badge={newBadge} onHide={() => setNewBadge(null)} />
 
+      {/* Hero photo */}
       <TouchableOpacity
         style={[styles.hero, { backgroundColor: c.heroBackground }]}
         onPress={handleAddPhoto}
-        activeOpacity={0.85}
+        activeOpacity={0.9}
       >
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.heroImage} />
         ) : (
           <View style={styles.heroPlaceholder}>
-            <Text style={{ fontSize: 48 }}>📷</Text>
+            <Text style={{ fontSize: 40 }}>📷</Text>
             <Text style={[styles.heroHint, { color: c.textSecondary }]}>
-              Appuyer pour ajouter une photo
+              Toucher pour ajouter une photo
             </Text>
           </View>
         )}
-        {isDone && (
-          <View style={[styles.takenBadge, { backgroundColor: c.badgeDoneBg }]}>
-            <Text style={[styles.takenText, { color: c.badgeDoneText }]}>
-              Photographié
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      <ScrollView contentContainerStyle={styles.body}>
-        <Text style={[styles.objTitle, { color: c.text }]}>{name}</Text>
-        <Text style={[styles.objType, { color: c.textSecondary }]}>{type}</Text>
-
-        <View style={[styles.infoBlock, { backgroundColor: c.backgroundCard }]}>
-          <View style={styles.infoRow}>
-            <Text style={[styles.lbl, { color: c.textSecondary }]}>Statut</Text>
-            <Text
-              style={[
-                styles.val,
-                { color: isDone ? c.badgeDoneText : c.textSecondary },
-              ]}
-            >
-              {isDone ? "Photographié" : "Pas encore photographié"}
-            </Text>
-          </View>
-          {domainId === "astro" && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Constellation
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {constellation || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Magnitude
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {magnitude || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Distance
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {distance || "—"}
-                </Text>
-              </View>
-            </>
-          )}
-          {domainId === "fleurs" && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Famille
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {constellation || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Floraison
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {magnitude || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Habitat
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {distance || "—"}
-                </Text>
-              </View>
-            </>
-          )}
-          {domainId === "arbres" && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Famille
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {constellation || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Feuillage
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {magnitude || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Habitat
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {distance || "—"}
-                </Text>
-              </View>
-            </>
-          )}
-          {domainId === "oiseaux" && (
-            <>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Ordre
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {constellation || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Envergure
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {magnitude || "—"}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={[styles.lbl, { color: c.textSecondary }]}>
-                  Habitat
-                </Text>
-                <Text style={[styles.val, { color: c.text }]}>
-                  {distance || "—"}
-                </Text>
-              </View>
-            </>
+        {/* Overlay gradient simulé */}
+        <View style={styles.heroOverlay}>
+          <TouchableOpacity
+            style={styles.heroBack}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.heroBackText}>‹</Text>
+          </TouchableOpacity>
+          {isDone && (
+            <View style={[styles.donePill, { backgroundColor: c.badgeDoneBg }]}>
+              <Text style={[styles.donePillText, { color: c.badgeDoneText }]}>
+                ✓ Photographié
+              </Text>
+            </View>
           )}
         </View>
+      </TouchableOpacity>
 
-        <View style={[styles.infoBlock, { backgroundColor: c.backgroundCard }]}>
-          <Text style={[styles.notesLabel, { color: c.textSecondary }]}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Titre */}
+        <View style={styles.titleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.objTitle, { color: c.text }]}>{name}</Text>
+            <Text style={[styles.objType, { color: c.textSecondary }]}>
+              {type}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.photoBtn, { backgroundColor: c.backgroundCard }]}
+            onPress={handleAddPhoto}
+            disabled={saving}
+          >
+            <Text style={{ fontSize: 18 }}>📷</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Métadonnées */}
+        <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
+          {meta.map((m, i) => (
+            <View
+              key={i}
+              style={[
+                styles.metaRow,
+                i < meta.length - 1 && {
+                  borderBottomWidth: 0.5,
+                  borderBottomColor: c.border,
+                },
+              ]}
+            >
+              <Text style={[styles.metaLabel, { color: c.textSecondary }]}>
+                {m.label}
+              </Text>
+              <Text style={[styles.metaValue, { color: c.text }]}>
+                {m.value || "—"}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Notes */}
+        <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
+          <Text style={[styles.cardTitle, { color: c.textSecondary }]}>
             Notes
           </Text>
           <TextInput
@@ -345,22 +289,26 @@ export default function DetailScreen() {
             placeholder="Ajouter des notes..."
             placeholderTextColor={c.placeholder}
             multiline
-            numberOfLines={4}
+            numberOfLines={3}
           />
         </View>
 
+        {/* Carte */}
         {location && (
           <View
-            style={[styles.infoBlock, { backgroundColor: c.backgroundCard }]}
+            style={[
+              styles.card,
+              {
+                backgroundColor: c.backgroundCard,
+                padding: 0,
+                overflow: "hidden",
+              },
+            ]}
           >
-            <Text style={[styles.notesLabel, { color: c.textSecondary }]}>
-              Lieu de prise de vue
-            </Text>
             <MapView
               style={styles.map}
               initialRegion={{
-                latitude: location.latitude,
-                longitude: location.longitude,
+                ...location,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
               }}
@@ -369,23 +317,18 @@ export default function DetailScreen() {
             >
               <Marker coordinate={location} />
             </MapView>
+            <View style={{ padding: 12 }}>
+              <Text style={[styles.cardTitle, { color: c.textSecondary }]}>
+                Lieu de prise de vue
+              </Text>
+              <Text style={[styles.metaValue, { color: c.text, fontSize: 12 }]}>
+                {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+              </Text>
+            </View>
           </View>
         )}
 
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: c.btnPrimary }]}
-          onPress={handleAddPhoto}
-          disabled={saving}
-        >
-          <Text style={[styles.addBtnText, { color: c.btnPrimaryText }]}>
-            {saving
-              ? "Sauvegarde..."
-              : isDone
-                ? "Changer la photo"
-                : "Ajouter une photo"}
-          </Text>
-        </TouchableOpacity>
-
+        {/* Bouton retirer */}
         {isDone && (
           <TouchableOpacity
             style={[styles.removeBtn, { borderColor: c.border }]}
@@ -393,12 +336,38 @@ export default function DetailScreen() {
             disabled={saving}
           >
             <Text style={[styles.removeBtnText, { color: c.btnDanger }]}>
-              Marquer comme non photographié
+              {saving ? "Sauvegarde..." : "Retirer du catalogue"}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {domainId.startsWith("custom_") && (
+          <TouchableOpacity
+            style={[styles.removeBtn, { borderColor: c.border }]}
+            onPress={() => {
+              Alert.alert(
+                "Supprimer l'objet",
+                `Supprimer "${name}" définitivement ?`,
+                [
+                  { text: "Annuler", style: "cancel" },
+                  {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: async () => {
+                      await deleteObject(domainId, id);
+                      router.back();
+                    },
+                  },
+                ],
+              );
+            }}
+          >
+            <Text style={[styles.removeBtnText, { color: c.btnDanger }]}>
+              Supprimer l'objet
             </Text>
           </TouchableOpacity>
         )}
       </ScrollView>
-      <BadgeUnlocked badge={newBadge} onHide={() => setNewBadge(null)} />
     </View>
   );
 }
@@ -406,19 +375,9 @@ export default function DetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-  },
-  backBtn: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  backText: {
-    fontSize: 14,
   },
   hero: {
-    height: 200,
-    alignItems: "center",
-    justifyContent: "center",
+    height: 280,
     position: "relative",
   },
   heroImage: {
@@ -427,85 +386,116 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   heroPlaceholder: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   heroHint: {
     fontSize: 13,
   },
-  takenBadge: {
+  heroOverlay: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 16,
+    paddingTop: 56,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
-  takenText: {
-    fontSize: 11,
+  heroBack: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#00000055",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroBackText: {
+    color: "#fff",
+    fontSize: 24,
+    lineHeight: 28,
+  },
+  donePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  donePillText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   body: {
     padding: 20,
     gap: 12,
-    paddingBottom: 40,
+    paddingBottom: 48,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   objTitle: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: -0.5,
   },
   objType: {
     fontSize: 13,
     marginTop: 2,
   },
-  infoBlock: {
+  photoBtn: {
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    padding: 14,
-    gap: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  infoRow: {
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    gap: 0,
+  },
+  cardTitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingVertical: 10,
   },
-  lbl: {
-    fontSize: 13,
+  metaLabel: {
+    fontSize: 14,
   },
-  val: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  notesLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  notesInput: {
-    fontSize: 13,
-    lineHeight: 20,
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  addBtn: {
-    borderRadius: 12,
-    padding: 14,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  addBtnText: {
+  metaValue: {
     fontSize: 14,
     fontWeight: "500",
   },
+  notesInput: {
+    fontSize: 14,
+    lineHeight: 22,
+    minHeight: 70,
+    textAlignVertical: "top",
+  },
+  map: {
+    height: 140,
+  },
   removeBtn: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     alignItems: "center",
     borderWidth: 1,
+    marginTop: 4,
   },
   removeBtnText: {
     fontSize: 14,
-  },
-  map: {
-    height: 150,
-    borderRadius: 10,
-    marginTop: 6,
-    overflow: "hidden",
+    fontWeight: "500",
   },
 });

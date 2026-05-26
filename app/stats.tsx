@@ -1,11 +1,11 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Domain, loadData } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
@@ -31,33 +31,52 @@ export default function StatsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={[styles.backText, { color: c.textSecondary }]}>
-          ← Accueil
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={[styles.title, { color: c.text }]}>Progression</Text>
-
-      <View style={[styles.globalCard, { backgroundColor: c.backgroundCard }]}>
-        <Text style={[styles.globalNum, { color: c.text }]}>{totalDone}</Text>
-        <Text style={[styles.globalLabel, { color: c.textSecondary }]}>
-          objets photographiés sur {totalObjs}
-        </Text>
-        <View style={[styles.barBg, { backgroundColor: c.border }]}>
-          <View
-            style={[
-              styles.barFill,
-              { width: `${totalPct}%`, backgroundColor: c.text },
-            ]}
-          />
-        </View>
-        <Text style={[styles.globalPct, { color: c.textSecondary }]}>
-          {totalPct}% complété
-        </Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={[styles.backText, { color: c.textSecondary }]}>
+            ← Accueil
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: c.text }]}>Statistiques</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list}>
+      <ScrollView
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Carte globale */}
+        <View
+          style={[styles.globalCard, { backgroundColor: c.backgroundCard }]}
+        >
+          <View style={styles.globalRow}>
+            <View>
+              <Text style={[styles.globalNum, { color: c.text }]}>
+                {totalDone}
+              </Text>
+              <Text style={[styles.globalLabel, { color: c.textSecondary }]}>
+                objets photographiés
+              </Text>
+            </View>
+            <View style={styles.globalRight}>
+              <Text style={[styles.globalPct, { color: "#5DCAA5" }]}>
+                {totalPct}%
+              </Text>
+              <Text style={[styles.globalSub, { color: c.textSecondary }]}>
+                sur {totalObjs}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.barBg, { backgroundColor: c.border }]}>
+            <View
+              style={[
+                styles.barFill,
+                { width: `${totalPct}%`, backgroundColor: "#5DCAA5" },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* Domaines */}
         {domains.map((domain) => {
           const done = domain.objects.filter((o) => o.done).length;
           const total = domain.objects.length;
@@ -81,14 +100,15 @@ export default function StatsScreen() {
                   <Text style={[styles.cardName, { color: c.text }]}>
                     {domain.label}
                   </Text>
-                  <Text style={[styles.cardCount, { color: c.textSecondary }]}>
-                    {done} / {total} photographiés
+                  <Text style={[styles.cardSub, { color: c.textSecondary }]}>
+                    {done} / {total}
                   </Text>
                 </View>
                 <Text style={[styles.cardPct, { color: domain.color }]}>
                   {pct}%
                 </Text>
               </View>
+
               <View style={[styles.barBg, { backgroundColor: c.border }]}>
                 <View
                   style={[
@@ -97,27 +117,45 @@ export default function StatsScreen() {
                   ]}
                 />
               </View>
-              {Object.entries(byType).map(([type, counts]) => (
-                <View key={type} style={styles.typeRow}>
-                  <Text style={[styles.typeLabel, { color: c.textSecondary }]}>
-                    {type}
-                  </Text>
-                  <Text style={[styles.typeCount, { color: c.text }]}>
-                    {counts.done}/{counts.total}
-                  </Text>
-                  <View style={[styles.typeBg, { backgroundColor: c.border }]}>
-                    <View
-                      style={[
-                        styles.typeFill,
-                        {
-                          width: `${Math.round((counts.done / counts.total) * 100)}%`,
-                          backgroundColor: domain.color,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-              ))}
+
+              <View style={styles.typeList}>
+                {Object.entries(byType)
+                  .sort((a, b) => b[1].total - a[1].total)
+                  .map(([type, counts]) => {
+                    const typePct = Math.round(
+                      (counts.done / counts.total) * 100,
+                    );
+                    return (
+                      <View
+                        key={type}
+                        style={[styles.typeRow, { borderTopColor: c.border }]}
+                      >
+                        <Text
+                          style={[styles.typeLabel, { color: c.textSecondary }]}
+                          numberOfLines={1}
+                        >
+                          {type}
+                        </Text>
+                        <View
+                          style={[styles.typeBg, { backgroundColor: c.border }]}
+                        >
+                          <View
+                            style={[
+                              styles.typeFill,
+                              {
+                                width: `${typePct}%`,
+                                backgroundColor: domain.color + "99",
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.typeCount, { color: c.text }]}>
+                          {counts.done}/{counts.total}
+                        </Text>
+                      </View>
+                    );
+                  })}
+              </View>
             </View>
           );
         })}
@@ -129,102 +167,119 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
   },
-  backBtn: {
+  header: {
+    paddingTop: 60,
     paddingHorizontal: 20,
-    marginBottom: 4,
+    paddingBottom: 16,
   },
   backText: {
     fontSize: 14,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  globalCard: {
-    marginHorizontal: 20,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  globalNum: {
-    fontSize: 48,
+    fontSize: 28,
     fontWeight: "700",
+    letterSpacing: -0.5,
   },
-  globalLabel: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  globalPct: {
-    fontSize: 13,
-    marginTop: 6,
-  },
-  list: {
+  body: {
     paddingHorizontal: 20,
     gap: 12,
     paddingBottom: 40,
   },
+  globalCard: {
+    borderRadius: 18,
+    padding: 20,
+    gap: 14,
+  },
+  globalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  globalNum: {
+    fontSize: 44,
+    fontWeight: "700",
+    letterSpacing: -1,
+  },
+  globalLabel: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  globalRight: {
+    alignItems: "flex-end",
+  },
+  globalPct: {
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  globalSub: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  barBg: {
+    height: 4,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  barFill: {
+    height: 4,
+    borderRadius: 2,
+  },
   card: {
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 16,
-    gap: 8,
+    gap: 10,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 4,
   },
   cardIcon: {
     fontSize: 24,
   },
   cardName: {
     fontSize: 15,
-    fontWeight: "500",
-  },
-  cardCount: {
-    fontSize: 12,
-  },
-  cardPct: {
-    fontSize: 18,
     fontWeight: "600",
   },
-  barBg: {
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
+  cardSub: {
+    fontSize: 12,
+    marginTop: 1,
   },
-  barFill: {
-    height: 6,
-    borderRadius: 3,
+  cardPct: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  typeList: {
+    gap: 0,
+    marginTop: 4,
   },
   typeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 2,
+    gap: 10,
+    paddingVertical: 8,
+    borderTopWidth: 0.5,
   },
   typeLabel: {
     fontSize: 12,
-    width: 160,
-  },
-  typeCount: {
-    fontSize: 12,
-    width: 36,
-    textAlign: "right",
+    width: 150,
   },
   typeBg: {
     flex: 1,
-    height: 4,
+    height: 3,
     borderRadius: 2,
     overflow: "hidden",
   },
   typeFill: {
-    height: 4,
+    height: 3,
     borderRadius: 2,
+  },
+  typeCount: {
+    fontSize: 12,
+    fontWeight: "500",
+    width: 36,
+    textAlign: "right",
   },
 });

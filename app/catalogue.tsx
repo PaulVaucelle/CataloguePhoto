@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,9 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import BackgroundField from "./components/BackgroundField";
-import { Domain, loadData } from "./storage/catalogue";
+import { deleteDomain, Domain, loadData } from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
 type Filter = "tous" | "fait" | "todo";
@@ -18,7 +18,6 @@ type SortBy = "nom" | "type";
 
 export default function CatalogueScreen() {
   const router = useRouter();
-
   const { domainId } = useLocalSearchParams<{ domainId: string }>();
   const c = useTheme(domainId);
   const [domain, setDomain] = useState<Domain | null>(null);
@@ -52,17 +51,45 @@ export default function CatalogueScreen() {
     return a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
   });
 
+  const done = domain.objects.filter((o) => o.done).length;
+  const total = domain.objects.length;
+  const pct = Math.round((done / total) * 100);
+
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
       <BackgroundField domainId={domainId} />
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={[styles.backText, { color: c.textSecondary }]}>
-          ← Accueil
-        </Text>
-      </TouchableOpacity>
-      <Text style={[styles.title, { color: c.text }]}>{domain.label}</Text>
 
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={[styles.backText, { color: c.textSecondary }]}>
+            ← Accueil
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerIcon}>{domain.icon}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: c.text }]}>
+              {domain.label}
+            </Text>
+            <Text style={[styles.headerSub, { color: c.textSecondary }]}>
+              {done}/{total} · {pct}%
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.headerBar, { backgroundColor: c.border }]}>
+          <View
+            style={[
+              styles.headerFill,
+              { width: `${pct}%`, backgroundColor: domain.color },
+            ]}
+          />
+        </View>
+      </View>
+
+      {/* Recherche */}
       <View style={[styles.searchRow, { backgroundColor: c.inputBg }]}>
+        <Text style={{ fontSize: 14, marginRight: 6 }}>🔍</Text>
         <TextInput
           style={[styles.searchInput, { color: c.text }]}
           placeholder="Rechercher..."
@@ -71,81 +98,86 @@ export default function CatalogueScreen() {
           onChangeText={setSearch}
         />
         {search.length > 0 && (
-          <TouchableOpacity
-            onPress={() => setSearch("")}
-            style={styles.clearBtn}
-          >
+          <TouchableOpacity onPress={() => setSearch("")}>
             <Text style={[styles.clearText, { color: c.placeholder }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <View style={styles.sortRow}>
-        <Text style={[styles.sortLabel, { color: c.textSecondary }]}>
-          Trier par
-        </Text>
-        {(["nom", "type"] as SortBy[]).map((s) => (
-          <TouchableOpacity
-            key={s}
-            style={[
-              styles.sortChip,
-              {
-                borderColor: sortBy === s ? c.text : c.border,
-                backgroundColor:
-                  sortBy === s ? c.backgroundCard : "transparent",
-              },
-            ]}
-            onPress={() => setSortBy(s)}
-          >
-            <Text
+      {/* Filtres + tri */}
+      <View style={styles.controls}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chips}
+        >
+          {(["tous", "fait", "todo"] as Filter[]).map((f) => (
+            <TouchableOpacity
+              key={f}
               style={[
-                styles.sortChipText,
+                styles.chip,
                 {
-                  color: sortBy === s ? c.text : c.textSecondary,
-                  fontWeight: sortBy === s ? "500" : "normal",
+                  borderColor: filter === f ? "transparent" : c.border,
+                  backgroundColor: filter === f ? c.text : "transparent",
                 },
               ]}
+              onPress={() => setFilter(f)}
             >
-              {s === "nom" ? "Nom" : "Type"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.filterRow}>
-        {(["tous", "fait", "todo"] as Filter[]).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[
-              styles.chip,
-              {
-                borderColor: filter === f ? "transparent" : c.border,
-                backgroundColor: filter === f ? c.text : "transparent",
-              },
-            ]}
-            onPress={() => setFilter(f)}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: filter === f ? c.background : c.textSecondary },
+                ]}
+              >
+                {f === "tous"
+                  ? `Tous (${total})`
+                  : f === "fait"
+                    ? `✓ ${done}`
+                    : `○ ${total - done}`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          {(["nom", "type"] as SortBy[]).map((s) => (
+            <TouchableOpacity
+              key={s}
               style={[
-                styles.chipText,
-                { color: filter === f ? c.background : c.textSecondary },
+                styles.chip,
+                {
+                  borderColor: sortBy === s ? c.text : c.border,
+                  backgroundColor: "transparent",
+                },
               ]}
+              onPress={() => setSortBy(s)}
             >
-              {f === "tous"
-                ? `Tous (${domain.objects.length})`
-                : f === "fait"
-                  ? `Photographiés (${domain.objects.filter((o) => o.done).length})`
-                  : `À faire (${domain.objects.filter((o) => !o.done).length})`}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    color: sortBy === s ? c.text : c.textSecondary,
+                    fontWeight: sortBy === s ? "600" : "400",
+                  },
+                ]}
+              >
+                {s === "nom" ? "A→Z" : "Type"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list}>
+      {/* Liste */}
+      <ScrollView
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      >
         {sorted.length === 0 ? (
-          <Text style={[styles.empty, { color: c.placeholder }]}>
-            Aucun résultat pour "{search}"
-          </Text>
+          <View style={styles.emptyState}>
+            <Text style={{ fontSize: 32 }}>🔍</Text>
+            <Text style={[styles.emptyText, { color: c.textSecondary }]}>
+              Aucun résultat
+            </Text>
+          </View>
         ) : (
           sorted.map((obj) => (
             <TouchableOpacity
@@ -169,44 +201,90 @@ export default function CatalogueScreen() {
                   },
                 })
               }
+              activeOpacity={0.7}
             >
               <View
                 style={[
                   styles.thumb,
-                  { backgroundColor: obj.done ? "#1a1a2e" : c.border },
+                  {
+                    backgroundColor: obj.done
+                      ? domain.color + "22"
+                      : c.border + "44",
+                  },
                 ]}
               >
-                <Text style={{ fontSize: 22 }}>
+                <Text style={{ fontSize: 20 }}>
                   {obj.done ? domain.icon : "📷"}
                 </Text>
               </View>
               <View style={styles.info}>
-                <Text style={[styles.objName, { color: c.text }]}>
+                <Text
+                  style={[styles.objName, { color: c.text }]}
+                  numberOfLines={1}
+                >
                   {obj.name}
                 </Text>
                 <Text style={[styles.objType, { color: c.textSecondary }]}>
                   {obj.type}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: obj.done ? c.badgeDoneBg : c.badgeTodoBg },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.badgeText,
-                    { color: obj.done ? c.badgeDoneText : c.badgeTodoText },
-                  ]}
-                >
-                  {obj.done ? "Fait" : "A faire"}
-                </Text>
-              </View>
+              {obj.done && (
+                <View
+                  style={[styles.doneDot, { backgroundColor: domain.color }]}
+                />
+              )}
+              <Text style={[styles.chevron, { color: c.textSecondary }]}>
+                ›
+              </Text>
             </TouchableOpacity>
           ))
         )}
       </ScrollView>
+
+      {domainId.startsWith("custom_") && (
+        <View style={styles.customActions}>
+          <TouchableOpacity
+            style={[styles.addObjBtn, { backgroundColor: domain.color }]}
+            onPress={() =>
+              router.push({
+                pathname: "/create-object",
+                params: {
+                  domainId: domain.id,
+                  domainLabel: domain.label,
+                  domainIcon: domain.icon,
+                  domainColor: domain.color,
+                },
+              })
+            }
+          >
+            <Text style={styles.addObjText}>+ Ajouter un objet</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.deleteBtn, { borderColor: c.border }]}
+            onPress={() => {
+              Alert.alert(
+                "Supprimer le domaine",
+                `Supprimer "${domain.label}" et tous ses objets ?`,
+                [
+                  { text: "Annuler", style: "cancel" },
+                  {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: async () => {
+                      await deleteDomain(domainId);
+                      router.back();
+                    },
+                  },
+                ],
+              );
+            }}
+          >
+            <Text style={[styles.deleteBtnText, { color: c.btnDanger }]}>
+              Supprimer le domaine
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -214,96 +292,109 @@ export default function CatalogueScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
     paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
   },
   backBtn: {
-    paddingHorizontal: 20,
-    marginBottom: 4,
+    marginBottom: 10,
   },
   backText: {
     fontSize: 14,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 10,
+  },
+  headerIcon: {
+    fontSize: 32,
+  },
   title: {
     fontSize: 24,
-    fontWeight: "600",
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+  },
+  headerSub: {
+    fontSize: 13,
+    marginTop: 1,
+  },
+  headerBar: {
+    height: 3,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  headerFill: {
+    height: 3,
+    borderRadius: 2,
   },
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
+    height: 42,
   },
   searchInput: {
     flex: 1,
-    height: 40,
     fontSize: 14,
-  },
-  clearBtn: {
-    padding: 4,
   },
   clearText: {
     fontSize: 13,
+    padding: 4,
   },
-  sortRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 20,
+  controls: {
     marginBottom: 10,
   },
-  sortLabel: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  sortChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  sortChipText: {
-    fontSize: 12,
-  },
-  filterRow: {
-    flexDirection: "row",
-    gap: 8,
+  chips: {
     paddingHorizontal: 20,
-    marginBottom: 16,
+    gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
   chip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 13,
+  },
+  divider: {
+    width: 1,
+    height: 20,
+    marginHorizontal: 4,
   },
   list: {
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 8,
     paddingBottom: 40,
   },
-  empty: {
-    textAlign: "center",
+  emptyState: {
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 60,
+  },
+  emptyText: {
     fontSize: 14,
-    marginTop: 40,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
   },
   thumb: {
     width: 44,
     height: 44,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -313,17 +404,56 @@ const styles = StyleSheet.create({
   objName: {
     fontSize: 14,
     fontWeight: "500",
+    letterSpacing: -0.2,
   },
   objType: {
     fontSize: 12,
     marginTop: 2,
   },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  doneDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  badgeText: {
-    fontSize: 11,
+  chevron: {
+    fontSize: 20,
+    fontWeight: "300",
+  },
+  addObjBtn: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+  },
+  addObjText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  customActions: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    gap: 8,
+  },
+  addObjBtn: {
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+  },
+  addObjText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteBtn: {
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  deleteBtnText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
