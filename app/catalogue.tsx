@@ -9,8 +9,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import BackgroundField from "./components/BackgroundField";
-import { deleteDomain, Domain, loadData } from "./storage/catalogue";
+import IdentifyButton from "./components/IdentifyButton";
+import {
+  deleteDomain,
+  Domain,
+  loadData,
+  toggleObject,
+} from "./storage/catalogue";
 import { useTheme } from "./theme/useTheme";
 
 type Filter = "tous" | "fait" | "todo";
@@ -87,13 +94,84 @@ export default function CatalogueScreen() {
         </View>
       </View>
 
-      {domain.objects.filter(o => o.done && o.photoUri).length >= 10 && (
+      {["fleurs", "arbres", "champignons"].includes(domainId) && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+          <IdentifyButton
+            domainId={domainId}
+            onIdentified={async (identified) => {
+              // Cherche dans le catalogue
+              const match = domain.objects.find(
+                (o) =>
+                  o.name.toLowerCase().includes(identified.toLowerCase()) ||
+                  identified
+                    .toLowerCase()
+                    .includes(o.name.toLowerCase().split(" ")[0]),
+              );
+
+              if (match) {
+                Alert.alert(
+                  "✅ Correspondance trouvée !",
+                  `"${identified}" correspond à "${match.name}" dans votre catalogue.\n\nMarquer comme photographié ?`,
+                  [
+                    { text: "Annuler", style: "cancel" },
+                    {
+                      text: "Marquer",
+                      onPress: async () => {
+                        const today = new Date().toLocaleDateString("fr-FR");
+                        await toggleObject(domainId, match.id, { date: today });
+                        // Recharge le domaine
+                        const data = await loadData();
+                        const found = data.find((d) => d.id === domainId);
+                        if (found) setDomain(found);
+                        Alert.alert(
+                          "Enregistré !",
+                          `${match.name} est maintenant marqué comme photographié.`,
+                        );
+                      },
+                    },
+                  ],
+                );
+              } else {
+                Alert.alert(
+                  "🔍 Aucune correspondance",
+                  `"${identified}" n'est pas dans votre catalogue.\n\nVoulez-vous l'ajouter ?`,
+                  [
+                    { text: "Non", style: "cancel" },
+                    {
+                      text: "Ajouter",
+                      onPress: () =>
+                        router.push({
+                          pathname: "/create-object",
+                          params: {
+                            domainId,
+                            domainLabel: domain.label,
+                            domainIcon: domain.icon,
+                            domainColor: domain.color,
+                            editName: identified,
+                          },
+                        }),
+                    },
+                  ],
+                );
+              }
+            }}
+          />
+        </View>
+      )}
+
+      {domain.objects.filter((o) => o.done && o.photoUri).length >= 10 && (
         <TouchableOpacity
-          style={[styles.albumBtn, { backgroundColor: domain.color + '22', borderColor: domain.color }]}
-          onPress={() => router.push({ pathname: '/album', params: { domainId: domain.id } })}
+          style={[
+            styles.albumBtn,
+            { backgroundColor: domain.color + "22", borderColor: domain.color },
+          ]}
+          onPress={() =>
+            router.push({ pathname: "/album", params: { domainId: domain.id } })
+          }
         >
           <Text style={[styles.albumBtnText, { color: domain.color }]}>
-            🎞️ Voir l'album ({domain.objects.filter(o => o.done && o.photoUri).length} photos)
+            🎞️ Voir l'album (
+            {domain.objects.filter((o) => o.done && o.photoUri).length} photos)
           </Text>
         </TouchableOpacity>
       )}
@@ -488,15 +566,15 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   albumBtn: {
-  marginHorizontal: 20,
-  marginBottom: 10,
-  borderRadius: 12,
-  padding: 12,
-  alignItems: 'center',
-  borderWidth: 1,
-},
-albumBtnText: {
-  fontSize: 14,
-  fontWeight: '600',
-},
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  albumBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
