@@ -1,3 +1,12 @@
+# Application de Catalogue Photo
+
+Parcours le monde pour photographier 900+ d'objets différents: arbres, fleurs, champignons, minéraux, pays, oiseaux et ajoute tes propres domaines.
+
+Utilise l'identifcation d'espèce de plantnet: https://plantnet.org/ pour capturer des abres, fleurs et champignons que tu ne reconnais pas.
+
+
+
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
