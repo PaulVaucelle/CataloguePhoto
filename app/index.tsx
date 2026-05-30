@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -24,6 +25,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const c = useTheme();
   const [domains, setDomains] = useState<Domain[]>([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem("onboarding_done").then((done) => {
+      if (!done) router.replace("/onboarding");
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
