@@ -109,6 +109,25 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Carte du ciel */}
+      <TouchableOpacity
+        style={[
+          styles.skyBtn,
+          { backgroundColor: "#0D1520", borderColor: "#1A2540" },
+        ]}
+        onPress={() => router.push("/skymap")}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.skyBtnIcon}>🔭</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.skyBtnTitle}>Carte du ciel AR</Text>
+          <Text style={styles.skyBtnSub}>
+            Pointe vers le ciel pour identifier les objets
+          </Text>
+        </View>
+        <Text style={{ color: "#5DCAA5", fontSize: 18 }}>›</Text>
+      </TouchableOpacity>
+
       <View style={styles.domainsGrid}>
         {domains.map((domain) => {
           const done = domain.objects.filter((o) => o.done).length;
@@ -357,4 +376,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  skyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+  skyBtnIcon: { fontSize: 28 },
+  skyBtnTitle: { color: "#E8E4F0", fontSize: 15, fontWeight: "600" },
+  skyBtnSub: { color: "#6070A0", fontSize: 12, marginTop: 2 },
 });
