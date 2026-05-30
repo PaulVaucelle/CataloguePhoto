@@ -21,10 +21,13 @@ type MarkerData = {
 };
 
 const DOMAIN_COLORS: Record<string, string> = {
-  astro: "#5DCAA5",
+  astro: "#1B3A5C",
   fleurs: "#D4537E",
-  arbres: "#639922",
+  arbres: "#3D6B47",
   oiseaux: "#378ADD",
+  mineraux: "#9B6DCA",
+  champignons: "#B87A3D",
+  pays: "#2E86C1",
 };
 
 export default function MapScreen() {
@@ -70,7 +73,9 @@ export default function MapScreen() {
         ]}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.backText, { color: c.textSecondary }]}>
+          <Text
+            style={[styles.backText, { color: c.accent ?? c.textSecondary }]}
+          >
             ← Accueil
           </Text>
         </TouchableOpacity>
@@ -115,22 +120,24 @@ export default function MapScreen() {
         </MapView>
       )}
 
-      {/* Légende flottante */}
+      {/* Légende */}
       <View style={[styles.legend, { backgroundColor: c.background + "ee" }]}>
         {Object.entries(DOMAIN_COLORS).map(([id, color]) => {
           const count = markers.filter((m) => m.domain.id === id).length;
-          const icon =
-            id === "astro"
-              ? "🔭"
-              : id === "fleurs"
-                ? "🌸"
-                : id === "arbres"
-                  ? "🌲"
-                  : "🦅";
+          if (count === 0) return null;
+          const icons: Record<string, string> = {
+            astro: "🔭",
+            fleurs: "🌸",
+            arbres: "🌲",
+            oiseaux: "🦅",
+            mineraux: "💎",
+            champignons: "🍄",
+            pays: "🌍",
+          };
           return (
             <View key={id} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: color }]} />
-              <Text style={styles.legendIcon}>{icon}</Text>
+              <Text style={styles.legendIcon}>{icons[id]}</Text>
               <Text
                 style={[
                   styles.legendCount,
@@ -170,7 +177,8 @@ export default function MapScreen() {
                   styles.modalDomainBadge,
                   {
                     backgroundColor:
-                      DOMAIN_COLORS[selected?.domain.id ?? ""] + "22",
+                      (DOMAIN_COLORS[selected?.domain.id ?? ""] ?? "#888") +
+                      "18",
                   },
                 ]}
               >
@@ -178,7 +186,9 @@ export default function MapScreen() {
                 <Text
                   style={[
                     styles.modalDomainLabel,
-                    { color: DOMAIN_COLORS[selected?.domain.id ?? ""] },
+                    {
+                      color: DOMAIN_COLORS[selected?.domain.id ?? ""] ?? "#888",
+                    },
                   ]}
                 >
                   {selected?.domain.label}
@@ -223,13 +233,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  backText: { fontSize: 14, marginBottom: 6 },
+  backText: { fontSize: 14, fontWeight: "500", marginBottom: 6 },
   headerBottom: { gap: 2 },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: -0.5,
-  },
+  title: { fontSize: 24, fontWeight: "700", letterSpacing: -0.5 },
   subtitle: { fontSize: 13 },
   map: { flex: 1 },
   empty: {
@@ -241,16 +247,8 @@ const styles = StyleSheet.create({
     marginTop: height * 0.2,
   },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    letterSpacing: -0.3,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 22,
-  },
+  emptyTitle: { fontSize: 17, fontWeight: "600", letterSpacing: -0.3 },
+  emptyText: { fontSize: 14, textAlign: "center", lineHeight: 22 },
   legend: {
     position: "absolute",
     bottom: 0,
@@ -258,19 +256,13 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "row",
     justifyContent: "space-around",
+    flexWrap: "wrap",
     padding: 14,
     paddingBottom: 30,
+    gap: 8,
   },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendIcon: { fontSize: 14 },
   legendCount: { fontSize: 14 },
   modalOverlay: {
@@ -291,16 +283,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 4,
   },
-  modalPhoto: {
-    width: "100%",
-    height: 200,
-    resizeMode: "cover",
-  },
-  modalBody: {
-    padding: 20,
-    paddingBottom: 36,
-    gap: 6,
-  },
+  modalPhoto: { width: "100%", height: 200, resizeMode: "cover" },
+  modalBody: { padding: 20, paddingBottom: 36, gap: 6 },
   modalDomainBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -311,15 +295,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 4,
   },
-  modalDomainLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  modalName: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
+  modalDomainLabel: { fontSize: 12, fontWeight: "600" },
+  modalName: { fontSize: 18, fontWeight: "700", letterSpacing: -0.3 },
   modalType: { fontSize: 13 },
   modalDate: { fontSize: 12, marginTop: 2 },
   modalNotes: {

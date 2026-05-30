@@ -14,10 +14,10 @@ import { useTheme } from "./theme/useTheme";
 const { width } = Dimensions.get("window");
 
 const NAV_ITEMS = [
-  { label: "Statistiques", icon: "📊", route: "/stats", color: "#5DCAA5" },
-  { label: "Badges", icon: "🏅", route: "/badges", color: "#F0A500" },
-  { label: "Mes spots", icon: "🗺️", route: "/map", color: "#378ADD" },
-  { label: "A propos", icon: "ℹ️", route: "/about", color: "#888888" },
+  { label: "Statistiques", icon: "📊", route: "/stats", color: "#3D6B47" },
+  { label: "Badges", icon: "🏅", route: "/badges", color: "#C4853A" },
+  { label: "Mes spots", icon: "🗺️", route: "/map", color: "#1B3A5C" },
+  { label: "À propos", icon: "ℹ️", route: "/about", color: "#7A8E9B" },
 ];
 
 export default function HomeScreen() {
@@ -47,25 +47,26 @@ export default function HomeScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.greeting, { color: c.textSecondary }]}>
-          Bienvenue
-        </Text>
         <Text style={[styles.appName, { color: c.text }]}>NatureScope</Text>
+        <Text style={[styles.tagline, { color: c.accent }]}>
+          Capture Earth's Wonders
+        </Text>
       </View>
 
       {/* Carte progression globale */}
       <View style={[styles.globalCard, { backgroundColor: c.backgroundCard }]}>
-        <View style={styles.globalTop}>
+        <View style={[styles.globalAccent, { backgroundColor: c.accent }]} />
+        <View style={styles.globalContent}>
           <View>
             <Text style={[styles.globalNum, { color: c.text }]}>
               {totalDone}
             </Text>
             <Text style={[styles.globalLabel, { color: c.textSecondary }]}>
-              sur {totalObjs} objets
+              sur {totalObjs} objets catalogués
             </Text>
           </View>
-          <View style={styles.circleContainer}>
-            <Text style={[styles.circlePct, { color: c.text }]}>
+          <View style={styles.globalRight}>
+            <Text style={[styles.circlePct, { color: c.accent }]}>
               {totalPct}%
             </Text>
             <Text style={[styles.circleLabel, { color: c.textSecondary }]}>
@@ -77,7 +78,7 @@ export default function HomeScreen() {
           <View
             style={[
               styles.barFill,
-              { width: `${totalPct}%`, backgroundColor: "#5DCAA5" },
+              { width: `${totalPct}%`, backgroundColor: c.accent },
             ]}
           />
         </View>
@@ -85,16 +86,22 @@ export default function HomeScreen() {
 
       {/* Domaines */}
       <View style={styles.sectionRow}>
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Domaines</Text>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>
+          Mes catalogues
+        </Text>
         <TouchableOpacity
           onPress={() => router.push("/create-domain")}
-          style={[styles.addDomainBtn, { backgroundColor: c.backgroundCard }]}
+          style={[
+            styles.addBtn,
+            { backgroundColor: c.backgroundCard, borderColor: c.border },
+          ]}
         >
-          <Text style={[styles.addDomainText, { color: c.text }]}>
+          <Text style={[styles.addBtnText, { color: c.accent }]}>
             + Nouveau
           </Text>
         </TouchableOpacity>
       </View>
+
       <View style={styles.domainsGrid}>
         {domains.map((domain) => {
           const done = domain.objects.filter((o) => o.done).length;
@@ -110,9 +117,16 @@ export default function HomeScreen() {
                   params: { domainId: domain.id },
                 })
               }
-              activeOpacity={0.7}
+              activeOpacity={0.75}
             >
-              <Text style={styles.domainIcon}>{domain.icon}</Text>
+              <View
+                style={[
+                  styles.domainIconWrap,
+                  { backgroundColor: domain.color + "18" },
+                ]}
+              >
+                <Text style={styles.domainIcon}>{domain.icon}</Text>
+              </View>
               <Text style={[styles.domainName, { color: c.text }]}>
                 {domain.label}
               </Text>
@@ -143,9 +157,16 @@ export default function HomeScreen() {
             key={item.route}
             style={[styles.navCard, { backgroundColor: c.backgroundCard }]}
             onPress={() => router.push(item.route as any)}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
-            <Text style={styles.navIcon}>{item.icon}</Text>
+            <View
+              style={[
+                styles.navIconWrap,
+                { backgroundColor: item.color + "18" },
+              ]}
+            >
+              <Text style={styles.navIcon}>{item.icon}</Text>
+            </View>
             <Text style={[styles.navLabel, { color: c.text }]}>
               {item.label}
             </Text>
@@ -161,36 +182,44 @@ const CARD_WIDTH = (width - 52) / 2;
 const styles = StyleSheet.create({
   content: {
     paddingTop: 64,
-    paddingBottom: 40,
+    paddingBottom: 48,
     paddingHorizontal: 20,
     gap: 16,
   },
   header: {
     marginBottom: 4,
   },
-  greeting: {
-    fontSize: 14,
-    fontWeight: "400",
-    letterSpacing: 0.3,
-  },
   appName: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "700",
     letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.5,
     marginTop: 2,
   },
   globalCard: {
     borderRadius: 18,
-    padding: 20,
-    gap: 14,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  globalTop: {
+  globalAccent: {
+    height: 4,
+  },
+  globalContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: 20,
+    paddingBottom: 14,
   },
   globalNum: {
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: "700",
     letterSpacing: -1,
   },
@@ -198,11 +227,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  circleContainer: {
-    alignItems: "center",
+  globalRight: {
+    alignItems: "flex-end",
   },
   circlePct: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "700",
   },
   circleLabel: {
@@ -210,19 +239,36 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   barBg: {
-    height: 5,
-    borderRadius: 3,
+    height: 4,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 2,
     overflow: "hidden",
   },
   barFill: {
-    height: 5,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
+  },
+  sectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: -4,
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: "700",
     letterSpacing: -0.3,
-    marginBottom: -4,
+  },
+  addBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  addBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   domainsGrid: {
     flexDirection: "row",
@@ -234,10 +280,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     gap: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  domainIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
   },
   domainIcon: {
-    fontSize: 26,
-    marginBottom: 4,
+    fontSize: 24,
   },
   domainName: {
     fontSize: 14,
@@ -274,28 +331,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  navIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   navIcon: {
-    fontSize: 20,
+    fontSize: 18,
   },
   navLabel: {
     fontSize: 14,
-    fontWeight: "500",
-  },
-
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: -4,
-  },
-  addDomainBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  addDomainText: {
-    fontSize: 13,
     fontWeight: "500",
   },
 });

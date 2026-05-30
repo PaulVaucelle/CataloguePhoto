@@ -64,7 +64,6 @@ export default function DetailScreen() {
     { latitude: number; longitude: number } | undefined
   >(initialLocation ? JSON.parse(initialLocation) : undefined);
 
-  // Labels selon le domaine
   const meta =
     domainId === "astro"
       ? [
@@ -141,7 +140,6 @@ export default function DetailScreen() {
   async function savePhoto(uri: string) {
     setSaving(true);
     const today = new Date().toLocaleDateString("fr-FR");
-
     let loc: { latitude: number; longitude: number } | undefined;
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
@@ -158,7 +156,6 @@ export default function DetailScreen() {
     const badgesBefore = computeBadges(dataBefore)
       .filter((b) => b.unlocked)
       .map((b) => b.id);
-
     await toggleObject(domainId, id, {
       photoUri: uri,
       date: today,
@@ -173,7 +170,6 @@ export default function DetailScreen() {
       (b) => b.unlocked && !badgesBefore.includes(b.id),
     );
     if (newlyUnlocked) setNewBadge(newlyUnlocked);
-
     setSaving(false);
   }
 
@@ -233,12 +229,11 @@ export default function DetailScreen() {
         ) : (
           <View style={styles.heroPlaceholder}>
             <Text style={{ fontSize: 40 }}>📷</Text>
-            <Text style={[styles.heroHint, { color: c.textSecondary }]}>
+            <Text style={[styles.heroHint, { color: "#ffffff88" }]}>
               Toucher pour ajouter une photo
             </Text>
           </View>
         )}
-        {/* Overlay gradient simulé */}
         <View style={styles.heroOverlay}>
           <TouchableOpacity
             style={styles.heroBack}
@@ -269,7 +264,14 @@ export default function DetailScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            style={[styles.photoBtn, { backgroundColor: c.backgroundCard }]}
+            style={[
+              styles.photoBtn,
+              {
+                backgroundColor: c.backgroundCard,
+                borderColor: c.border,
+                borderWidth: 1,
+              },
+            ]}
             onPress={handleAddPhoto}
             disabled={saving}
           >
@@ -278,31 +280,40 @@ export default function DetailScreen() {
         </View>
 
         {/* Métadonnées */}
-        <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
-          {meta.map((m, i) => (
-            <View
-              key={i}
-              style={[
-                styles.metaRow,
-                i < meta.length - 1 && {
-                  borderBottomWidth: 0.5,
-                  borderBottomColor: c.border,
-                },
-              ]}
+        {meta.length > 0 && (
+          <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
+            <Text
+              style={[styles.cardLabel, { color: c.accent ?? c.textSecondary }]}
             >
-              <Text style={[styles.metaLabel, { color: c.textSecondary }]}>
-                {m.label}
-              </Text>
-              <Text style={[styles.metaValue, { color: c.text }]}>
-                {m.value || "—"}
-              </Text>
-            </View>
-          ))}
-        </View>
+              Informations
+            </Text>
+            {meta.map((m, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.metaRow,
+                  i < meta.length - 1 && {
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: c.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.metaLabel, { color: c.textSecondary }]}>
+                  {m.label}
+                </Text>
+                <Text style={[styles.metaValue, { color: c.text }]}>
+                  {m.value || "—"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Notes */}
         <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
-          <Text style={[styles.cardTitle, { color: c.textSecondary }]}>
+          <Text
+            style={[styles.cardLabel, { color: c.accent ?? c.textSecondary }]}
+          >
             Notes
           </Text>
           <TextInput
@@ -342,17 +353,27 @@ export default function DetailScreen() {
               <Marker coordinate={location} />
             </MapView>
             <View style={{ padding: 12 }}>
-              <Text style={[styles.cardTitle, { color: c.textSecondary }]}>
+              <Text
+                style={[
+                  styles.cardLabel,
+                  { color: c.accent ?? c.textSecondary },
+                ]}
+              >
                 Lieu de prise de vue
               </Text>
-              <Text style={[styles.metaValue, { color: c.text, fontSize: 12 }]}>
+              <Text
+                style={[
+                  styles.metaValue,
+                  { color: c.text, fontSize: 12, marginTop: 2 },
+                ]}
+              >
                 {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
               </Text>
             </View>
           </View>
         )}
 
-        {/* Bouton retirer */}
+        {/* Actions */}
         {isDone && (
           <TouchableOpacity
             style={[styles.removeBtn, { borderColor: c.border }]}
@@ -366,54 +387,53 @@ export default function DetailScreen() {
         )}
 
         {domainId.startsWith("custom_") && (
-          <TouchableOpacity
-            style={[styles.removeBtn, { borderColor: c.border }]}
-            onPress={() =>
-              router.push({
-                pathname: "/create-object",
-                params: {
-                  domainId,
-                  domainLabel: "",
-                  domainIcon: "",
-                  domainColor: "",
-                  objectId: id,
-                  editName: name,
-                  editType: type,
-                },
-              })
-            }
-          >
-            <Text style={[styles.removeBtnText, { color: c.text }]}>
-              Modifier l'objet
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {domainId.startsWith("custom_") && (
-          <TouchableOpacity
-            style={[styles.removeBtn, { borderColor: c.border }]}
-            onPress={() => {
-              Alert.alert(
-                "Supprimer l'objet",
-                `Supprimer "${name}" définitivement ?`,
-                [
-                  { text: "Annuler", style: "cancel" },
-                  {
-                    text: "Supprimer",
-                    style: "destructive",
-                    onPress: async () => {
-                      await deleteObject(domainId, id);
-                      router.back();
-                    },
+          <>
+            <TouchableOpacity
+              style={[styles.removeBtn, { borderColor: c.border }]}
+              onPress={() =>
+                router.push({
+                  pathname: "/create-object",
+                  params: {
+                    domainId,
+                    domainLabel: "",
+                    domainIcon: "",
+                    domainColor: "",
+                    objectId: id,
+                    editName: name,
+                    editType: type,
                   },
-                ],
-              );
-            }}
-          >
-            <Text style={[styles.removeBtnText, { color: c.btnDanger }]}>
-              Supprimer l'objet
-            </Text>
-          </TouchableOpacity>
+                })
+              }
+            >
+              <Text style={[styles.removeBtnText, { color: c.text }]}>
+                Modifier l'objet
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.removeBtn, { borderColor: c.border }]}
+              onPress={() =>
+                Alert.alert(
+                  "Supprimer l'objet",
+                  `Supprimer "${name}" définitivement ?`,
+                  [
+                    { text: "Annuler", style: "cancel" },
+                    {
+                      text: "Supprimer",
+                      style: "destructive",
+                      onPress: async () => {
+                        await deleteObject(domainId, id);
+                        router.back();
+                      },
+                    },
+                  ],
+                )
+              }
+            >
+              <Text style={[styles.removeBtnText, { color: c.btnDanger }]}>
+                Supprimer l'objet
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
       </ScrollView>
     </View>
@@ -421,11 +441,9 @@ export default function DetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   hero: {
-    height: 280,
+    height: 260,
     position: "relative",
   },
   heroImage: {
@@ -439,9 +457,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  heroHint: {
-    fontSize: 13,
-  },
+  heroHint: { fontSize: 13 },
   heroOverlay: {
     position: "absolute",
     top: 0,
@@ -462,20 +478,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  heroBackText: {
-    color: "#fff",
-    fontSize: 24,
-    lineHeight: 28,
-  },
+  heroBackText: { color: "#fff", fontSize: 24, lineHeight: 28 },
   donePill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
-  donePillText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
+  donePillText: { fontSize: 12, fontWeight: "600" },
   body: {
     padding: 20,
     gap: 12,
@@ -491,10 +500,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.5,
   },
-  objType: {
-    fontSize: 13,
-    marginTop: 2,
-  },
+  objType: { fontSize: 13, marginTop: 2 },
   photoBtn: {
     width: 44,
     height: 44,
@@ -506,44 +512,37 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     gap: 0,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
   },
-  cardTitle: {
+  cardLabel: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: 0.8,
+    marginBottom: 10,
   },
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 10,
   },
-  metaLabel: {
-    fontSize: 14,
-  },
-  metaValue: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
+  metaLabel: { fontSize: 14 },
+  metaValue: { fontSize: 14, fontWeight: "500" },
   notesInput: {
     fontSize: 14,
     lineHeight: 22,
     minHeight: 70,
     textAlignVertical: "top",
   },
-  map: {
-    height: 140,
-  },
+  map: { height: 140 },
   removeBtn: {
     borderRadius: 14,
     padding: 14,
     alignItems: "center",
     borderWidth: 1,
-    marginTop: 4,
   },
-  removeBtnText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
+  removeBtnText: { fontSize: 14, fontWeight: "500" },
 });

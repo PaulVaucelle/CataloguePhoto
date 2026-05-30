@@ -33,7 +33,9 @@ export default function StatsScreen() {
     <View style={[styles.container, { backgroundColor: c.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={[styles.backText, { color: c.textSecondary }]}>
+          <Text
+            style={[styles.backText, { color: c.accent ?? c.textSecondary }]}
+          >
             ← Accueil
           </Text>
         </TouchableOpacity>
@@ -48,17 +50,25 @@ export default function StatsScreen() {
         <View
           style={[styles.globalCard, { backgroundColor: c.backgroundCard }]}
         >
-          <View style={styles.globalRow}>
+          <View
+            style={[
+              styles.globalAccent,
+              { backgroundColor: c.accent ?? "#C4853A" },
+            ]}
+          />
+          <View style={styles.globalContent}>
             <View>
               <Text style={[styles.globalNum, { color: c.text }]}>
                 {totalDone}
               </Text>
               <Text style={[styles.globalLabel, { color: c.textSecondary }]}>
-                objets photographiés
+                objets catalogués
               </Text>
             </View>
             <View style={styles.globalRight}>
-              <Text style={[styles.globalPct, { color: "#5DCAA5" }]}>
+              <Text
+                style={[styles.globalPct, { color: c.accent ?? "#C4853A" }]}
+              >
                 {totalPct}%
               </Text>
               <Text style={[styles.globalSub, { color: c.textSecondary }]}>
@@ -66,11 +76,23 @@ export default function StatsScreen() {
               </Text>
             </View>
           </View>
-          <View style={[styles.barBg, { backgroundColor: c.border }]}>
+          <View
+            style={[
+              styles.barBg,
+              {
+                backgroundColor: c.border,
+                marginHorizontal: 20,
+                marginBottom: 16,
+              },
+            ]}
+          >
             <View
               style={[
                 styles.barFill,
-                { width: `${totalPct}%`, backgroundColor: "#5DCAA5" },
+                {
+                  width: `${totalPct}%`,
+                  backgroundColor: c.accent ?? "#C4853A",
+                },
               ]}
             />
           </View>
@@ -94,41 +116,55 @@ export default function StatsScreen() {
               key={domain.id}
               style={[styles.card, { backgroundColor: c.backgroundCard }]}
             >
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardIcon}>{domain.icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardName, { color: c.text }]}>
-                    {domain.label}
-                  </Text>
-                  <Text style={[styles.cardSub, { color: c.textSecondary }]}>
-                    {done} / {total}
+              <View style={[styles.cardTop, { borderLeftColor: domain.color }]}>
+                <View style={styles.cardHeader}>
+                  <View
+                    style={[
+                      styles.cardIconWrap,
+                      { backgroundColor: domain.color + "18" },
+                    ]}
+                  >
+                    <Text style={styles.cardIcon}>{domain.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardName, { color: c.text }]}>
+                      {domain.label}
+                    </Text>
+                    <Text style={[styles.cardSub, { color: c.textSecondary }]}>
+                      {done} / {total}
+                    </Text>
+                  </View>
+                  <Text style={[styles.cardPct, { color: domain.color }]}>
+                    {pct}%
                   </Text>
                 </View>
-                <Text style={[styles.cardPct, { color: domain.color }]}>
-                  {pct}%
-                </Text>
-              </View>
-
-              <View style={[styles.barBg, { backgroundColor: c.border }]}>
-                <View
-                  style={[
-                    styles.barFill,
-                    { width: `${pct}%`, backgroundColor: domain.color },
-                  ]}
-                />
+                <View style={[styles.barBg, { backgroundColor: c.border }]}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      { width: `${pct}%`, backgroundColor: domain.color },
+                    ]}
+                  />
+                </View>
               </View>
 
               <View style={styles.typeList}>
                 {Object.entries(byType)
                   .sort((a, b) => b[1].total - a[1].total)
-                  .map(([type, counts]) => {
+                  .map(([type, counts], i, arr) => {
                     const typePct = Math.round(
                       (counts.done / counts.total) * 100,
                     );
                     return (
                       <View
                         key={type}
-                        style={[styles.typeRow, { borderTopColor: c.border }]}
+                        style={[
+                          styles.typeRow,
+                          {
+                            borderTopColor: c.border,
+                            borderTopWidth: i === 0 ? 0 : 0.5,
+                          },
+                        ]}
                       >
                         <Text
                           style={[styles.typeLabel, { color: c.textSecondary }]}
@@ -144,7 +180,7 @@ export default function StatsScreen() {
                               styles.typeFill,
                               {
                                 width: `${typePct}%`,
-                                backgroundColor: domain.color + "99",
+                                backgroundColor: domain.color + "88",
                               },
                             ]}
                           />
@@ -165,18 +201,13 @@ export default function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  backText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
+  backText: { fontSize: 14, fontWeight: "500", marginBottom: 8 },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -189,97 +220,79 @@ const styles = StyleSheet.create({
   },
   globalCard: {
     borderRadius: 18,
-    padding: 20,
-    gap: 14,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  globalRow: {
+  globalAccent: { height: 4 },
+  globalContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
+    padding: 20,
+    paddingBottom: 14,
   },
   globalNum: {
     fontSize: 44,
     fontWeight: "700",
     letterSpacing: -1,
   },
-  globalLabel: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  globalRight: {
-    alignItems: "flex-end",
-  },
-  globalPct: {
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  globalSub: {
-    fontSize: 12,
-    marginTop: 2,
-  },
+  globalLabel: { fontSize: 13, marginTop: 2 },
+  globalRight: { alignItems: "flex-end" },
+  globalPct: { fontSize: 28, fontWeight: "700" },
+  globalSub: { fontSize: 12, marginTop: 2 },
   barBg: {
     height: 4,
     borderRadius: 2,
     overflow: "hidden",
   },
-  barFill: {
-    height: 4,
-    borderRadius: 2,
-  },
+  barFill: { height: 4, borderRadius: 2 },
   card: {
     borderRadius: 18,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  cardTop: {
     padding: 16,
-    gap: 10,
+    paddingBottom: 12,
+    borderLeftWidth: 4,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    marginBottom: 10,
   },
-  cardIcon: {
-    fontSize: 24,
+  cardIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  cardName: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  cardSub: {
-    fontSize: 12,
-    marginTop: 1,
-  },
-  cardPct: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  typeList: {
-    gap: 0,
-    marginTop: 4,
-  },
+  cardIcon: { fontSize: 20 },
+  cardName: { fontSize: 15, fontWeight: "600" },
+  cardSub: { fontSize: 12, marginTop: 1 },
+  cardPct: { fontSize: 20, fontWeight: "700" },
+  typeList: { paddingHorizontal: 16, paddingBottom: 8 },
   typeRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingVertical: 8,
-    borderTopWidth: 0.5,
   },
-  typeLabel: {
-    fontSize: 12,
-    width: 150,
-  },
+  typeLabel: { fontSize: 12, width: 150 },
   typeBg: {
     flex: 1,
     height: 3,
     borderRadius: 2,
     overflow: "hidden",
   },
-  typeFill: {
-    height: 3,
-    borderRadius: 2,
-  },
-  typeCount: {
-    fontSize: 12,
-    fontWeight: "500",
-    width: 36,
-    textAlign: "right",
-  },
+  typeFill: { height: 3, borderRadius: 2 },
+  typeCount: { fontSize: 12, fontWeight: "500", width: 36, textAlign: "right" },
 });
