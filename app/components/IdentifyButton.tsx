@@ -1,12 +1,12 @@
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useTheme } from "../theme/useTheme";
 
@@ -26,7 +26,7 @@ type Result = {
 
 type Props = {
   domainId: string;
-  onIdentified?: (name: string) => void;
+  onIdentified?: (name: string, photoUri: string) => void;
 };
 
 export default function IdentifyButton({ domainId, onIdentified }: Props) {
@@ -95,7 +95,7 @@ export default function IdentifyButton({ domainId, onIdentified }: Props) {
       setResults(parsed);
 
       if (parsed.length > 0 && onIdentified) {
-        onIdentified(parsed[0].commonName);
+        onIdentified(parsed[0].commonName, uri);
       }
     } catch (e: any) {
       console.error("PlantNet error:", e);

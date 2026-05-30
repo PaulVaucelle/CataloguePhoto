@@ -107,7 +107,7 @@ export default function CatalogueScreen() {
         <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
           <IdentifyButton
             domainId={domainId}
-            onIdentified={async (identified) => {
+            onIdentified={async (identified, photoUri) => {
               const match = domain.objects.find(
                 (o) =>
                   o.name.toLowerCase().includes(identified.toLowerCase()) ||
@@ -125,7 +125,10 @@ export default function CatalogueScreen() {
                       text: "Marquer",
                       onPress: async () => {
                         const today = new Date().toLocaleDateString("fr-FR");
-                        await toggleObject(domainId, match.id, { date: today });
+                        await toggleObject(domainId, match.id, {
+                          date: today,
+                          photoUri,
+                        });
                         const data = await loadData();
                         const found = data.find((d) => d.id === domainId);
                         if (found) setDomain(found);
@@ -209,6 +212,7 @@ export default function CatalogueScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
+        style={{ flexShrink: 0 }}
       >
         {(["tous", "fait", "todo"] as Filter[]).map((f) => (
           <TouchableOpacity
@@ -482,6 +486,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
+    minHeight: 44,
   },
   chip: {
     paddingHorizontal: 14,
