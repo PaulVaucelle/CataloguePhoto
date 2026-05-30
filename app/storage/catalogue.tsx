@@ -8367,3 +8367,13 @@ export async function updateObject(
   await saveData(data);
   return data;
 }
+
+const PLANTNET_KEY_STORAGE = "plantnet_api_key";
+
+export async function savePlantnetKey(key: string): Promise<void> {
+  await AsyncStorage.setItem(PLANTNET_KEY_STORAGE, key);
+}
+
+export async function loadPlantnetKey(): Promise<string | null> {
+  return await AsyncStorage.getItem(PLANTNET_KEY_STORAGE);
+}

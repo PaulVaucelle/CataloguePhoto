@@ -100,6 +100,29 @@ export default function AboutScreen() {
           ))}
         </View>
 
+        <TouchableOpacity
+          style={[
+            styles.card,
+            {
+              backgroundColor: c.backgroundCard,
+              flexDirection: "row",
+              alignItems: "center",
+            },
+          ]}
+          onPress={() => router.push("/plantnet-setup")}
+        >
+          <Text style={{ fontSize: 20, marginRight: 12 }}>🌿</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.rowLabel, { color: c.text }]}>
+              Clé API Pl@ntNet
+            </Text>
+            <Text style={[styles.rowDetail, { color: c.textSecondary }]}>
+              Configurer l'identification de plantes
+            </Text>
+          </View>
+          <Text style={[styles.link, { color: c.accent ?? "#C4853A" }]}>›</Text>
+        </TouchableOpacity>
+
         {/* Sources */}
         <View style={[styles.card, { backgroundColor: c.backgroundCard }]}>
           <Text style={[styles.cardLabel, { color: c.accent ?? "#C4853A" }]}>

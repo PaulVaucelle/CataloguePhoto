@@ -1,5 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,9 +8,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { loadPlantnetKey } from "../storage/catalogue";
 import { useTheme } from "../theme/useTheme";
 
-const PLANTNET_KEY = process.env.EXPO_PUBLIC_PLANTNET_KEY;
+// const PLANTNET_KEY = process.env.EXPO_PUBLIC_PLANTNET_KEY;
+
+// Dans le composant, remplace la constante par un état :
+// const [apiKey, setApiKey] = useState<string | null>(null);
+
+// useEffect(() => {
+//   loadPlantnetKey().then(setApiKey);
+// }, []);
 
 const PLANTNET_ORGANS: Record<string, string> = {
   fleurs: "flower",
@@ -37,6 +45,22 @@ export default function IdentifyButton({ domainId, onIdentified }: Props) {
   if (!PLANTNET_ORGANS[domainId]) return null;
 
   async function handleIdentify() {
+    // Dans le composant, remplace la constante par un état :
+    const [apiKey, setApiKey] = useState<string | null>(null);
+
+    useEffect(() => {
+      loadPlantnetKey().then(setApiKey);
+    }, []);
+
+    // Ajoute une vérification au début de handleIdentify :
+    if (!apiKey) {
+      Alert.alert(
+        "Clé manquante",
+        "Configure ta clé Pl@ntNet dans les paramètres.",
+      );
+      return;
+    }
+
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
       Alert.alert("Permission refusée", "Autorise l'accès à l'appareil photo.");
@@ -64,7 +88,9 @@ export default function IdentifyButton({ domainId, onIdentified }: Props) {
       } as any);
       formData.append("organs", PLANTNET_ORGANS[domainId]);
 
-      const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${PLANTNET_KEY}&lang=fr&nb-results=3&include-related-images=false`;
+      // Et dans l'URL de la requete, remplace PLANTNET_KEY par apiKey :
+      const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${apiKey}&lang=fr&nb-results=3&include-related-images=false`;
+      // const url = `https://my-api.plantnet.org/v2/identify/all?api-key=${PLANTNET_KEY}&lang=fr&nb-results=3&include-related-images=false`;
 
       const res = await fetch(url, {
         method: "POST",
