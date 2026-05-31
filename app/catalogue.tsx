@@ -10,7 +10,9 @@ import {
   View,
 } from "react-native";
 import BackgroundField from "./components/BackgroundField";
+import IdentifyBirdButton from "./components/IdentifyBirdButton";
 import IdentifyButton from "./components/IdentifyButton";
+import IdentifyMineralButton from "./components/IdentifyMineralButton";
 import {
   Domain,
   deleteDomain,
@@ -129,6 +131,121 @@ export default function CatalogueScreen() {
                           date: today,
                           photoUri,
                         });
+                        const data = await loadData();
+                        const found = data.find((d) => d.id === domainId);
+                        if (found) setDomain(found);
+                      },
+                    },
+                  ],
+                );
+              } else {
+                Alert.alert(
+                  "Aucune correspondance",
+                  `"${identified}" n'est pas dans votre catalogue.\n\nVoulez-vous l'ajouter ?`,
+                  [
+                    { text: "Non", style: "cancel" },
+                    {
+                      text: "Ajouter",
+                      onPress: () =>
+                        router.push({
+                          pathname: "/create-object",
+                          params: {
+                            domainId,
+                            domainLabel: domain.label,
+                            domainIcon: domain.icon,
+                            domainColor: domain.color,
+                            editName: identified,
+                          },
+                        }),
+                    },
+                  ],
+                );
+              }
+            }}
+          />
+        </View>
+      )}
+      {domainId === "mineraux" && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+          <IdentifyMineralButton
+            onIdentified={async (identified, photoUri) => {
+              const match = domain.objects.find(
+                (o) =>
+                  o.name.toLowerCase().includes(identified.toLowerCase()) ||
+                  identified
+                    .toLowerCase()
+                    .includes(o.name.toLowerCase().split(" ")[0]),
+              );
+              if (match) {
+                Alert.alert(
+                  "Correspondance trouvée",
+                  `"${identified}" correspond à "${match.name}".\n\nMarquer comme photographié ?`,
+                  [
+                    { text: "Annuler", style: "cancel" },
+                    {
+                      text: "Marquer",
+                      onPress: async () => {
+                        const today = new Date().toLocaleDateString("fr-FR");
+                        await toggleObject(domainId, match.id, {
+                          date: today,
+                          photoUri,
+                        });
+                        const data = await loadData();
+                        const found = data.find((d) => d.id === domainId);
+                        if (found) setDomain(found);
+                      },
+                    },
+                  ],
+                );
+              } else {
+                Alert.alert(
+                  "Aucune correspondance",
+                  `"${identified}" n'est pas dans votre catalogue.\n\nVoulez-vous l'ajouter ?`,
+                  [
+                    { text: "Non", style: "cancel" },
+                    {
+                      text: "Ajouter",
+                      onPress: () =>
+                        router.push({
+                          pathname: "/create-object",
+                          params: {
+                            domainId,
+                            domainLabel: domain.label,
+                            domainIcon: domain.icon,
+                            domainColor: domain.color,
+                            editName: identified,
+                          },
+                        }),
+                    },
+                  ],
+                );
+              }
+            }}
+          />
+        </View>
+      )}
+      {domainId === "oiseaux" && (
+        <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+          <IdentifyBirdButton
+            onIdentified={async (identified) => {
+              const match = domain.objects.find(
+                (o) =>
+                  o.name.toLowerCase().includes(identified.toLowerCase()) ||
+                  identified
+                    .toLowerCase()
+                    .includes(o.name.toLowerCase().split(" ")[0]),
+              );
+              if (match) {
+                Alert.alert(
+                  "Oiseau identifié",
+                  `"${identified}" correspond à "${match.name}".\n\nMarquer comme photographié ?`,
+                  [
+                    { text: "Annuler", style: "cancel" },
+                    {
+                      text: "Marquer",
+                      onPress: async () => {
+                        const today = new Date().toLocaleDateString("fr-FR");
+                        await toggleObject(domainId, match.id, { date: today });
                         const data = await loadData();
                         const found = data.find((d) => d.id === domainId);
                         if (found) setDomain(found);
